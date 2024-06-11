@@ -120,3 +120,70 @@ ________________________________________________________________________________
 
 '''
 
+# Function to update an existing order
+    # Updates an existing order based on the user's input for the new details.
+    # Prompts the user to search by Order ID, then allows updating product name, price, quantity, customer name, phone number, and email.
+    # Calculates the total amount based on the new price and quantity.
+    # Updates the details in the Excel file 'orders_3.xlsx' and saves the workbook.
+    # Prints success message if the order is updated, or an error message if the Order ID is not found.
+     
+def update_order():
+    search_option = input("Enter 1 to search by Order ID or 2 to search by Customer Name: ")
+    if search_option == '1':
+        order_id = input("Enter the Order ID: ")
+        found = False
+        for index, row in enumerate(sheet.iter_rows(min_row=2, values_only=True), start=2):
+            if row[0] == order_id:
+                found = True
+                new_product_name = input("Enter the new product name (leave blank to keep the same): ") or row[1]
+                
+                while True:
+                        try:
+                            new_price = float(input("Enter the new price (leave blank to keep the same): ") or row[2])
+                            if new_price <= 0:
+                                raise ValueError("Price must be a positive number.")
+                            break
+                        except ValueError as e:
+                            print(f"Invalid input: {e}. Please enter a valid positive number.")
+                while True:
+                        try:
+                            new_quantity = int(input("Enter the new quantity (leave blank to keep the same): ") or row[3])
+                            if new_quantity <= 0:
+                                raise ValueError("Quantity must be a positive integer.")
+                            break
+                        except ValueError as e:
+                            print(f"Invalid input: {e}. Please enter a valid positive integer.")
+
+                new_total_amount = new_price * new_quantity
+                new_customer_name = input("Enter the new customer name (leave blank to keep the same): ") or row[5]
+                new_phone_number = input("Enter the new phone number (leave blank to keep the same): ") or row[6]
+                new_email = input("Enter the new email (leave blank to keep the same): ") or row[7]
+                new_date_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+                # Update values in the row
+                row = list(row)  # Convert tuple to list to modify values
+                row[1] = new_product_name
+                row[2] = new_price
+                row[3] = new_quantity
+                row[4] = new_total_amount
+                row[5] = new_customer_name
+                row[6] = new_phone_number
+                row[7] = new_email
+                row[8] = new_date_time
+
+                # Write updated row back to the Excel file
+                for col_index, value in enumerate(row, start=1):
+                    sheet.cell(row=index, column=col_index, value=value)
+
+                workbook.save(file_path)
+                print("Order updated successfully!\n")
+                break
+
+        if not found:
+            print("Order ID not found.")
+
+
+'''
+____________________________________________________________________________________________
+
+'''
