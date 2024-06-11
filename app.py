@@ -243,3 +243,79 @@ def view_order_details():
 ____________________________________________________________________________________________
 
 '''
+
+
+# Main program loop
+# Main program loop
+workbook, sheet = load_excel(file_path) 
+
+if workbook is None or sheet is None:  
+    print("Exiting due to file error.")
+    exit()
+
+while True:
+    print("\nPy - Retail Order Manager")
+    print("1. New/Add Order")
+    print("2. Update Existing Order")
+    print("3. View Order Details")
+    print("4. Open or Create New Excel file")
+    print("5. Delete Order")  # Add the new option
+    print("6. Exit") # Update the Exit option number
+    
+    choice = input("Enter your choice: ")
+
+    if choice == '1':
+        add_order()
+    elif choice == '2':
+        update_order()
+    elif choice == '3':
+        view_order_details()
+    elif choice == '4':
+        # Prompt for a new file path
+        while True:
+            new_file_path = input("Enter the file name you want to open or create (with .xlsx): ")
+            if new_file_path.endswith(".xlsx"):
+                break
+            else:
+                print("Invalid file name. Please include '.xlsx' extension.")
+
+        workbook, sheet = load_excel(new_file_path)  # Use the new file path
+        if workbook is None or sheet is None:
+            print("Error opening or creating the specified file.")
+            continue  # Go back to the menu without changing the current file
+
+    elif choice == '5':
+        delete_order()
+    elif choice == '6':  # Updated exit option
+        print("Exiting... Thank you for using PyRetail Manager!")
+        break
+    else:
+        print("Invalid choice. Please enter a number between 1 and 6.")
+                # Ask if the user wants to try again
+        exit_flag = True
+        while exit_flag:
+            try_again = input("Do you want to choose again? (yes/no): ").lower()
+            if try_again == 'yes':
+                break  # Return to the main menu
+            elif try_again == 'no':
+                print("Exiting...")
+                exit()  # Directly exit the program here
+            else:
+                print("Invalid input. Please enter 'yes' or 'no'.")
+        if not exit_flag:
+            try:
+                workbook.save(file_path)
+            except Exception as e:
+                print(f"An error occurred while saving the file on exit: {e}")
+
+# Automatically save the workbook on exit
+try:
+    workbook.save(file_path)
+except Exception as e:
+    print(f"An error occurred while saving the file on exit: {e}")
+'''
+____________________________________________________________________________________________
+
+'''
+
+# End of the Program
