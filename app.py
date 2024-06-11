@@ -187,3 +187,59 @@ def update_order():
 ____________________________________________________________________________________________
 
 '''
+
+# function to convert data into tabular form to display data
+
+from tabulate import tabulate
+# Function to view order details
+    # View order details based on search options.
+    # This function prompts the user to select a search option: 1 for searching by Order ID or 2 for searching by Customer Name.
+    # If the user selects 1, the function prompts the user to enter an Order ID and searches for the corresponding order details in the 'orders_3.xlsx' Excel file.
+    # If the order is found, the function displays the order details in a tabular format using the 'tabulate' library.
+    # If the order is not found, the function displays a message indicating that the Order ID was not found.
+    # If the user selects 2, the function prompts the user to enter a Customer Name and searches for the corresponding order details in the 'orders_3.xlsx' Excel file.
+    # If the customer is found, the function displays the order details in a tabular format using the 'tabulate' library.
+    # If the customer is not found, the function displays a message indicating that the Customer Name was not found.
+    # If the user enters an invalid option, the function displays a message indicating that the option is invalid.
+
+def view_order_details():
+    search_option = input("Enter 1 to search by Order ID or 2 to search by Customer Name: \n")
+    if search_option == '1':
+        order_id = input("\nEnter the Order ID: ")
+        order_found = False
+        order_data = []
+        for row in sheet.iter_rows(min_row=2, values_only=True):
+            if row[0] == order_id:
+                order_found = True
+                order_data.append(list(row))
+        if order_found:
+            columns = ['Order ID', 'Product Name', 'Price', 'Quantity', 'Total Amount', 'Customer Name', 'Phone Number', 'Email', 'Order Date & Time']
+            order_df = pd.DataFrame(order_data, columns=columns)
+            print(f"\nOrder Details for Order ID {order_id}:\n")
+            print(tabulate(order_df, headers='keys', tablefmt='pretty'))
+        else:
+            print("Order ID not found.")
+
+    elif search_option == '2':
+        customer_name = input("\nEnter the Customer Name: ")
+        customer_found = False
+        customer_data = []
+        for row in sheet.iter_rows(min_row=2, values_only=True):
+            if row[5].lower() == customer_name.lower():
+                customer_found = True
+                customer_data.append(list(row))
+        if customer_found:
+            columns = ['Order ID', 'Product Name', 'Price', 'Quantity', 'Total Amount', 'Customer Name', 'Phone Number', 'Email', 'Order Date & Time']
+            customer_df = pd.DataFrame(customer_data, columns=columns)
+            print(f"\nOrder Details for Customer '{customer_name}':\n")
+            print(tabulate(customer_df, headers='keys', tablefmt='pretty'))
+        else:
+            print("Customer name not found.")
+    else:
+        print("Invalid option.")
+
+
+'''
+____________________________________________________________________________________________
+
+'''
