@@ -1,3 +1,5 @@
+# Importing Libraries 
+
 import streamlit as st
 import pandas as pd
 from mysql.connector import connect, Error # type: ignore
@@ -6,12 +8,15 @@ import plotly.express as px # type: ignore
 import os
 import openpyxl
 from openpyxl import Workbook
-    
+# -------------------------------------------------------------------------------------------------------------------
+
 # Initialize session state variables
 if 'database_names' not in st.session_state:
     st.session_state['database_names'] = []
 if 'excel_file_names' not in st.session_state:
     st.session_state['excel_file_names'] = []
+
+# -------------------------------------------------------------------------------------------------------------------
 
 # Database connection function
 def get_database_connection():
@@ -26,6 +31,9 @@ def get_database_connection():
     except Error as e:
         st.error(f"Error connecting to MySQL: {e}")
         return None
+    
+# -------------------------------------------------------------------------------------------------------------------
+
 
 # Function to create database if it doesn't exist
 def create_database_if_not_exists(connection, database_name):
@@ -38,6 +46,10 @@ def create_database_if_not_exists(connection, database_name):
         st.success(f"Database '{database_name}' created successfully!")
     except Error as e:
         st.error(f"Error creating database: {e}")
+
+
+# -------------------------------------------------------------------------------------------------------------------
+
 
 # Function to create order table
 def create_order_table(connection, table_name):
@@ -295,9 +307,11 @@ def delete_order(connection, table_name):
             finally:
                 cursor.close()
 
-# Function to display orders
+#display orders function
 def display_orders(connection, table_name):
     st.subheader("All Orders")
+    
+    # Fetch data from the database
     cursor = connection.cursor()
     cursor.execute(f"SELECT * FROM {table_name}")
     orders = cursor.fetchall()
@@ -306,89 +320,126 @@ def display_orders(connection, table_name):
                                        "Payment Mode", "Payment Status", "Discount", "Tax", "Net Total", "Location"])
     st.dataframe(df)
     cursor.close()
-    
+
     st.subheader("Order Analysis")
-    
+
+    # KPI: Total Sales, Total Profit, Total Orders
+    total_sales = df['Total Amount'].sum()
+    total_profit = df['Profit'].sum()
+    total_orders = df['Order ID'].nunique()
+
+    st.write(f"**Total Sales:** ₹{total_sales:,.2f}")
+    st.write(f"**Total Profit:** ₹{total_profit:,.2f}")
+    st.write(f"**Total Orders:** {total_orders}")
+
+    # Category-wise Sales
     st.write("Category-wise Sales")
     category_sales = df.groupby('Category')['Total Amount'].sum().reset_index()
-    fig = px.bar(category_sales, x='Category', y='Total Amount', title='Category-wise Sales')
-    st.plotly_chart(fig)
-    
+    fig_category_sales = px.bar(category_sales, x='Category', y='Total Amount', title='Category-wise Sales', color='Category')
+    st.plotly_chart(fig_category_sales)
+
+    # Profit vs. Discount by Category
+    st.write("Profit vs Discount by Category")
+    fig_profit_discount = px.scatter(df, x='Discount', y='Profit', color='Category', 
+                                     title="Profit vs Discount by Category", labels={'Discount': 'Discount (%)', 'Profit': 'Profit'})
+    st.plotly_chart(fig_profit_discount)
+
+    # Payment Mode Distribution (Pie Chart)
     st.write("Payment Mode Distribution")
     payment_mode_dist = df['Payment Mode'].value_counts().reset_index()
     payment_mode_dist.columns = ['Payment Mode', 'Count']
-    fig2 = px.pie(payment_mode_dist, values='Count', names='Payment Mode', title='Payment Mode Distribution')
-    st.plotly_chart(fig2)
+    fig_payment_mode = px.pie(payment_mode_dist, values='Count', names='Payment Mode', title='Payment Mode Distribution')
+    st.plotly_chart(fig_payment_mode)
 
+    # Date-wise Sales (Line Chart)
     st.write("Date-wise Sales")
     df['Date'] = df['Date Time'].apply(lambda x: x.date())
     date_sales = df.groupby('Date')['Total Amount'].sum().reset_index()
-    fig3 = px.line(date_sales, x='Date', y='Total Amount', title='Date-wise Sales')
-    st.plotly_chart(fig3)
+    fig_date_sales = px.line(date_sales, x='Date', y='Total Amount', title='Date-wise Sales')
+    st.plotly_chart(fig_date_sales)
 
-# Streamlit app main function
+    # Additional: KPI Dashboard Visualization
+    st.subheader("Business Analytics KPIs")
+
+    # KPI: Total Sales, Profit, and Average Order Value
+    avg_order_value = df['Total Amount'].mean()
+    avg_profit = df['Profit'].mean()
+
+    st.write(f"**Average Order Value:** ₹{avg_order_value:,.2f}")
+    st.write(f"**Average Profit per Order:** ₹{avg_profit:,.2f}")
+    
+    # Top 5 Products by Sales
+    top_products = df.groupby('Product Name')['Total Amount'].sum().reset_index().sort_values('Total Amount', ascending=False).head(5)
+    st.write("Top 5 Products by Sales")
+    fig_top_products = px.bar(top_products, x='Product Name', y='Total Amount', title='Top 5 Products by Sales')
+    st.plotly_chart(fig_top_products)
+
+
 def main():
-    st.set_page_config(page_title="Ledger Management system", page_icon="📒", layout="centered")
+    st.set_page_config(page_title="Order Management System", page_icon="📒", layout="centered")
     st.title("Order Management System")
 
-    # Database selection/creation
-    st.sidebar.subheader("Database Selection/Creation")
-    database_name = st.sidebar.text_input("Enter database name to create/select")
+    # Initialize session state
+    if 'database_name' not in st.session_state:
+        st.session_state['database_name'] = None
+    if 'table_name' not in st.session_state:
+        st.session_state['table_name'] = None
+    if 'excel_file_name' not in st.session_state:
+        st.session_state['excel_file_name'] = None
 
-    connection = get_database_connection()
-    if connection:
-        if database_name:
-            create_database_if_not_exists(connection, database_name)
-            st.sidebar.write(f"Selected Database: {database_name}")
-        else:
-            if st.session_state['database_names']:
-                selected_database = st.sidebar.selectbox("Select a database", st.session_state['database_names'])
-                if selected_database:
-                    database_name = selected_database
-                    st.sidebar.write(f"Selected Database: {database_name}")
-            else:
-                st.sidebar.write("No databases available. Please create a new database.")
-        connection.database = database_name  # Set the database
-
-        # Table selection/creation
-        st.sidebar.subheader("Table Selection/Creation")
-        table_name = st.sidebar.text_input("Enter table name to create/select")
-        if table_name:
-            create_order_table(connection, table_name)
-            st.sidebar.write(f"Selected Table: {table_name}")
-        else:
-            st.sidebar.write("Please enter a table name.")
-
-        # Excel file selection/creation
-        st.sidebar.subheader("Excel File Selection/Creation")
-        excel_file_name = st.sidebar.text_input("Enter Excel file name to create/select")
-
-        if excel_file_name:
-            if excel_file_name not in st.session_state['excel_file_names']:
-                save_to_excel([], excel_file_name)
-            st.sidebar.write(f"Selected Excel File: {excel_file_name}")
-        else:
-            if st.session_state['excel_file_names']:
-                selected_excel_file = st.sidebar.selectbox("Select an Excel file", st.session_state['excel_file_names'])
-                if selected_excel_file:
-                    excel_file_name = selected_excel_file
-                    st.sidebar.write(f"Selected Excel File: {excel_file_name}")
-            else:
-                st.sidebar.write("No Excel files available. Please create a new Excel file.")
-
-        # Main functionality
-        option = st.selectbox("Choose an action", ["Add Order", "Update Order", "Delete Order", "Display Orders"])
+    # Sidebar for database, table, and Excel file selection
+    with st.sidebar:
+        st.subheader("Configuration")
         
-        if option == "Add Order":
-            add_order(connection, table_name, excel_file_name)
-        elif option == "Update Order":
-            update_order(connection, table_name)
-        elif option == "Delete Order":
-            delete_order(connection, table_name)
-        elif option == "Display Orders":
-            display_orders(connection, table_name)
+        # Database selection/creation
+        database_name = st.text_input("Enter database name to create/select", value=st.session_state['database_name'] or "")
+        if database_name:
+            st.session_state['database_name'] = database_name
+        
+        # Table selection/creation
+        table_name = st.text_input("Enter table name to create/select", value=st.session_state['table_name'] or "")
+        if table_name:
+            st.session_state['table_name'] = table_name
+        
+        # Excel file selection/creation
+        excel_file_name = st.text_input("Enter Excel file name to create/select", value=st.session_state['excel_file_name'] or "")
+        if excel_file_name:
+            st.session_state['excel_file_name'] = excel_file_name
 
-        connection.close()
+    # Main content
+    if not st.session_state['database_name']:
+        st.info("Please enter a database name in the sidebar to get started.")
+    elif not st.session_state['table_name']:
+        st.info("Please enter a table name in the sidebar to continue.")
+    elif not st.session_state['excel_file_name']:
+        st.info("Please enter an Excel file name in the sidebar to proceed.")
+    else:
+        connection = get_database_connection()
+        if connection:
+            try:
+                create_database_if_not_exists(connection, st.session_state['database_name'])
+                connection.database = st.session_state['database_name']
+                create_order_table(connection, st.session_state['table_name'])
+                
+                if st.session_state['excel_file_name'] not in st.session_state['excel_file_names']:
+                    save_to_excel([], st.session_state['excel_file_name'])
+                
+                option = st.selectbox("Choose an action", ["Add Order", "Update Order", "Delete Order", "Display Orders"])
+                
+                if option == "Add Order":
+                    add_order(connection, st.session_state['table_name'], st.session_state['excel_file_name'])
+                elif option == "Update Order":
+                    update_order(connection, st.session_state['table_name'])
+                elif option == "Delete Order":
+                    delete_order(connection, st.session_state['table_name'])
+                elif option == "Display Orders":
+                    display_orders(connection, st.session_state['table_name'])
+            except Error as e:
+                st.error(f"An error occurred: {e}")
+            finally:
+                connection.close()
+        else:
+            st.error("Unable to connect to the database. Please check your database configuration.")
 
 if __name__ == "__main__":
     main()
