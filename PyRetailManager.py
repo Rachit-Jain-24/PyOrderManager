@@ -2,6 +2,7 @@
 
 import streamlit as st
 import pandas as pd
+import mysql
 from mysql.connector import connect, Error # type: ignore
 from datetime import datetime
 import plotly.express as px # type: ignore
@@ -12,6 +13,16 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
+
+# streamlit==1.29.0
+# pandas==2.1.4
+# plotly==5.18.0
+# openpyxl==3.1.2
+# reportlab==4.0.8
+# protobuf==4.25.1
+# mysql-connector-python==8.2.0
+
+
 # -------------------------------------------------------------------------------------------------------------------
 
 # Initialize session state variables
@@ -26,10 +37,11 @@ if 'excel_file_names' not in st.session_state:
 def get_database_connection():
     try:
         connection = connect(
-            host="localhost",
-            user="root",
-            password="rachit2999",
-            database=""  # Leave this empty as we'll create/select the database later
+            # Use environment variables or Streamlit secrets for sensitive data
+            host=st.secrets["localhost"],
+            user=st.secrets["root"],
+            password=st.secrets["rachit2999"],
+            database=""
         )
         return connection
     except Error as e:
@@ -873,7 +885,7 @@ def generate_invoice(order_data, business_info):
     elements.append(Paragraph("<br/>", styles['Normal']))
 
     # Summary
-    elements.append(Paragraph(f"Subtotal: ���{total_amount - total_gst:,.2f}", styles['Normal']))
+    elements.append(Paragraph(f"Subtotal: ₹{total_amount - total_gst:,.2f}", styles['Normal']))
     elements.append(Paragraph(f"Total GST: ₹{total_gst:,.2f}", styles['Normal']))
     elements.append(Paragraph(f"Grand Total: ₹{total_amount:,.2f}", styles['Normal']))
     
