@@ -1,8 +1,8 @@
 streamlit
-mysql-connector-python
-mysql
 pandas
+numpy
+mysql
+mysql-connector-python
 plotly
 openpyxl
 reportlab
-protobuf
