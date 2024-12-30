@@ -2,7 +2,6 @@
 
 import streamlit as st
 import pandas as pd
-import mysql
 from mysql.connector import connect, Error # type: ignore
 from datetime import datetime
 import plotly.express as px # type: ignore
@@ -13,16 +12,6 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
-
-# streamlit==1.29.0
-# pandas==2.1.4
-# plotly==5.18.0
-# openpyxl==3.1.2
-# reportlab==4.0.8
-# protobuf==4.25.1
-# mysql-connector-python==8.2.0
-
-
 # -------------------------------------------------------------------------------------------------------------------
 
 # Initialize session state variables
@@ -37,10 +26,9 @@ if 'excel_file_names' not in st.session_state:
 def get_database_connection():
     try:
         connection = connect(
-            # Use environment variables or Streamlit secrets for sensitive data
-            host=st.secrets["localhost"],
-            user=st.secrets["root"],
-            password=st.secrets["rachit2999"],
+            host=st.secrets["db_host"],
+            user=st.secrets["db_username"],
+            password=st.secrets["db_password"],
             database=""
         )
         return connection
@@ -49,7 +37,6 @@ def get_database_connection():
         return None
     
 # -------------------------------------------------------------------------------------------------------------------
-
 
 # Function to create database if it doesn't exist
 def create_database_if_not_exists(connection, database_name):
@@ -63,9 +50,7 @@ def create_database_if_not_exists(connection, database_name):
     except Error as e:
         st.error(f"Error creating database: {e}")
 
-
 # -------------------------------------------------------------------------------------------------------------------
-
 
 # Function to create order table
 def create_order_table(connection, table_name):
@@ -1068,8 +1053,16 @@ def generate_invoice_page(connection, table_name):
         st.info("No orders available for invoice generation")
 
 def main():
-    st.set_page_config(page_title="Order Management System", page_icon="📒", layout="centered")
-    st.title("Order Management System")
+    st.set_page_config(page_title="PyRetailManager", page_icon="📊", layout="centered")
+    st.title("PyRetailManager")
+
+    # Test database connection
+    connection = get_database_connection()
+    if connection:
+        st.success("Connected to the database successfully!")
+        connection.close()  # Close the connection after testing
+    else:
+        st.error("Failed to connect to the database.")
 
     # Initialize session state
     if 'database_name' not in st.session_state:
@@ -1151,3 +1144,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
