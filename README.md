@@ -1,8 +1,8 @@
-# PyOrderManager
+# PyStoreManager
 
-PyOrder Management System
+PyStore Management System
 
-The Order Management System is a Streamlit-based web application designed to facilitate efficient management of orders for businesses. It integrates with a MySQL database for robust data storage and Excel for flexible data handling and visualization.
+The Store Management System is a Streamlit-based web application designed to facilitate efficient management of orders for businesses. It integrates with a MySQL database for robust data storage and Excel for flexible data handling and visualization.
 
 Key features:
 
